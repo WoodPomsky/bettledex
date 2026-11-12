@@ -11,6 +11,9 @@
     <header class="app-header">
       <h1 class="logo">Battleground</h1>
       <p class="tagline">Two fighters enter. One verdict leaves.</p>
+      <button type="button" class="btn btn-nav" data-action="open-dex">
+        BattleDex <span id="dex-count" class="dex-count">0</span>
+      </button>
     </header>
 
     <!-- View 1: input form (visible on load) -->
@@ -63,6 +66,7 @@
               </div>
             </div>
             <figcaption class="art-name">A very angry goose</figcaption>
+            <button type="button" class="btn btn-save" data-action="save" hidden>Save to BattleDex</button>
           </figure>
           <figure class="fighter-art" data-art-slot="2" data-state="loading" aria-live="polite">
             <div class="art-frame">
@@ -74,8 +78,11 @@
               </div>
             </div>
             <figcaption class="art-name">10 cows</figcaption>
+            <button type="button" class="btn btn-save" data-action="save" hidden>Save to BattleDex</button>
           </figure>
         </div>
+
+        <p id="save-status" class="status-message" role="status" hidden></p>
 
         <p id="result-reasoning" class="result-reasoning">
           The cows held a meeting to discuss strategy. The goose did not attend the meeting.
@@ -86,7 +93,20 @@
       </article>
     </section>
 
-    <!-- View 4: error -->
+    <!-- View 4: BattleDex (saved fighters) -->
+    <section id="view-battledex" class="view" data-view="battledex" hidden>
+      <div class="card">
+        <div class="dex-header">
+          <h2 class="dex-title">BattleDex</h2>
+          <button type="button" class="btn btn-secondary btn-small" data-action="close-dex">Back</button>
+        </div>
+        <p id="dex-status" class="status-message" role="status" hidden></p>
+        <p id="dex-empty" class="dex-empty">No fighters saved yet. Hit "Save to BattleDex" under a fighter's art after a fight.</p>
+        <ul id="dex-list" class="dex-grid"></ul>
+      </div>
+    </section>
+
+    <!-- View 5: error -->
     <section id="view-error" class="view" data-view="error" hidden>
       <div class="card card-center" role="alert">
         <p class="error-title">The arena collapsed.</p>
