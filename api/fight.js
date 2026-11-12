@@ -6,6 +6,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 
 import { JUDGE_SYSTEM_PROMPT, buildJudgeMessage } from "./_lib/judge-prompt.js";
+import { unescapeTagText } from "./_lib/tag-text.js";
 
 const MAX_NAME_LENGTH = 100;
 
@@ -100,8 +101,9 @@ export default async function handler(req, res) {
   }
 
   // 3. The winner must be one of the two fighters. Return the name exactly as
-  // the user typed it, even if the judge changed the capitalisation.
-  const winnerKey = normalise(verdict.winner);
+  // the user typed it, even if the judge changed the capitalisation. Names are
+  // escaped in the prompt, so the judge may copy back "&lt;" for "<".
+  const winnerKey = normalise(unescapeTagText(verdict.winner));
   const winner =
     winnerKey === normalise(fighter1) ? fighter1 : winnerKey === normalise(fighter2) ? fighter2 : null;
   const reasoning = verdict.reasoning.trim();
