@@ -2,7 +2,7 @@
 
 Built in small stages. Each stage ends with something you can see or test before moving on. Don't start the next stage until the current one's **Done when** checks all pass.
 
-Everything is built and tested **locally**. No deploying to Vercel during this plan.
+Everything is built and tested **locally**. No deploying to Vercel until the final QA stage (Stage 11).
 
 ---
 
@@ -70,14 +70,9 @@ Everything is built and tested **locally**. No deploying to Vercel during this p
 
 ---
 
-### Stage 4 — Winner card and image API
-**Goal:** Make the verdict look good, and build a serverless function that makes art for one fighter.
+### Stage 4 — Image API (backend only)
+**Goal:** A serverless function that makes art for one fighter.
 
-**Winner card**
-- Build the winner card: the winner's name up front, with the reasoning below.
-- Add the reveal animation.
-
-**Image API (backend only)**
 - Create `api/image.js`. It takes one fighter name and calls OpenAI's image API.
 - Every image follows one shared **art style template**. Keep it in a single place (e.g. `api/_lib/image-prompt.js`, next to the judge prompt) and build every image prompt from it, so no image can drift from the style:
   > Vintage illustrative style of a 19th century natural history plate. Absolutely no text, words, letters, numbers, logos, watermarks, UI elements, borders, symbols or frames of any kind. Illustration only, nothing else on canvas.
@@ -88,7 +83,7 @@ Everything is built and tested **locally**. No deploying to Vercel during this p
   - **Moderation blocked:** OpenAI's safety system refused the prompt (it returns the error code `moderation_blocked`, e.g. for copyrighted characters or real people). Return its own error code (e.g. `{ "error": "moderation_blocked" }`) so the page can say the art was refused.
   - **Generic failure:** anything else (network error, timeout, other API errors, an empty or unreadable reply). Return a separate error code (e.g. `{ "error": "image_failed" }`).
 
-**Done when:** Every verdict shows a styled, animated winner card. Calling the image endpoint with a fighter name returns a base64 image in the shared art style, with no text, borders or frames. A prompt blocked by moderation returns the moderation-blocked response, and any other failure returns the separate generic error.
+**Done when:** Calling the image endpoint with a fighter name returns a base64 image in the shared art style, with no text, borders or frames. A prompt blocked by moderation returns the moderation-blocked response, and any other failure returns the separate generic error.
 
 ---
 
@@ -140,7 +135,23 @@ Everything is built and tested **locally**. No deploying to Vercel during this p
 
 ---
 
-### Stage 9 — Reuse saved art
+### Stage 9 — Claude redesign
+**Goal:** A full visual overhaul of the whole app, done in Claude Design.
+
+Up to here the styling is functional only. This stage hands the entire app to **Claude Design** for a complete redesign, rather than just polishing the verdict UI.
+
+- Give Claude Design every screen: the input form, loading view, result view (verdict plus both fighters' art and their placeholders), error view, and the BattleDex.
+- Include a proper **winner card**: the winner's name up front, the reasoning below, and a reveal animation.
+- Keep the vintage natural-history art style of the images in mind so the UI suits them.
+- Bring the design back into the existing `index.html`, `style.css` and `app.js`. Keep the structure the JavaScript relies on: the `[data-view]` sections, `showView()`, the `hidden` attribute, and the element IDs and classes `app.js` uses.
+- Design for mobile widths as well as desktop.
+- This is a visual change only. No changes to the API, prompts or storage format.
+
+**Done when:** Every view and the BattleDex use the new design, every verdict shows a styled, animated winner card, and a full fight, save and delete still work exactly as before.
+
+---
+
+### Stage 10 — Reuse saved art
 **Goal:** Saved fighters keep their image.
 
 - Before calling the image API, check whether the fighter's `nameKey` is already in the BattleDex.
@@ -150,31 +161,38 @@ Everything is built and tested **locally**. No deploying to Vercel during this p
 
 ---
 
-### Stage 10 — Polish and final local test
-**Goal:** The MVP works well end to end on localhost.
+### Stage 11 — Final QA and deploy
+**Goal:** The MVP works well end to end, first on localhost and then live on Vercel.
 
+**Final local test**
 - Check the layout works at mobile widths (browser dev tools device mode).
 - Test a few unusual cases: very long names, emoji, group inputs, likely-refused names (check they show the moderation-blocked message, not the generic one), an identical matchup (e.g. "cat" vs "cat").
 - Check every image matches the shared art style, with no text, borders or frames.
 - Re-run the prompt-injection test list from Stage 5.
 
-**Done when:** Every case above behaves correctly on localhost.
+**Deploy to Vercel**
+- Before deploying, confirm the cost risk: there is no rate limiting, so the endpoints are open and anyone with the link can run up Claude and OpenAI API costs. Decide whether that's acceptable for sharing with friends, or whether to add protection first.
+- Add `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as environment variables in the Vercel project (never commit them).
+- Deploy with `vercel --prod` (or connect the GitHub repo).
+- Re-run a quick smoke test on the live URL: a normal fight, a moderation-blocked image, saving to and deleting from the BattleDex, and reused saved art.
+
+**Done when:** Every case above behaves correctly on localhost, and the smoke test passes on the live Vercel URL.
 
 ---
 
 ## Part 2: After the MVP
 
-### Stage 11 — Quick re-fight from the BattleDex
+### Stage 12 — Quick re-fight from the BattleDex
 **Goal:** Pick saved fighters instead of typing.
 
 - Let users choose a saved fighter for either side, straight from the BattleDex.
-- Saved fighters use their stored art (this reuses Stage 9).
+- Saved fighters use their stored art (this reuses Stage 10).
 
 **Done when:** You can start a fight using two saved fighters without typing anything.
 
 ---
 
-### Stage 12 — Backend sync
+### Stage 13 — Backend sync
 **Goal:** The BattleDex follows you across devices.
 
 - Choose a database and a simple way to identify users. This needs its own planning session when we get here.

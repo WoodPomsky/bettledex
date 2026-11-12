@@ -17,7 +17,7 @@ npm install   # first time only
 vercel dev
 ```
 
-This serves the static page and the `api/` serverless functions together on localhost. Everything is built and tested locally. **Do not deploy to Vercel** during the build plan.
+This serves the static page and the `api/` serverless functions together on localhost. Everything is built and tested locally. **Do not deploy to Vercel** until the build plan's final QA stage (Stage 11).
 
 `package.json` only lists server dependencies and sets `"type": "module"` (the `api/` code uses `import`/`export`). There is no build step, linter or test suite. Testing is manual: use the browser, and call the API endpoints directly with curl (`curl -X POST localhost:3000/api/fight -H 'Content-Type: application/json' -d '{"fighter1":"cat","fighter2":"dog"}'`). Secrets (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) live in `.env`, which is gitignored.
 
