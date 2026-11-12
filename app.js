@@ -1,14 +1,15 @@
 const MAX_NAME_LENGTH = 100;
-const FAKE_LOADING_MS = 1200;
 
 const views = document.querySelectorAll('[data-view]');
 const form = document.getElementById('fight-form');
+const fightButton = form.querySelector('button[type="submit"]');
 const fighter1Input = document.getElementById('fighter1');
 const fighter2Input = document.getElementById('fighter2');
 const formError = document.getElementById('form-error');
 
 const resultWinner = document.getElementById('result-winner');
 const resultMatchup = document.getElementById('result-matchup');
+const resultReasoning = document.getElementById('result-reasoning');
 const errorMessage = document.getElementById('error-message');
 
 // Show exactly one view and hide all the others.
@@ -46,8 +47,34 @@ function showError(message) {
   showView('error');
 }
 
-form.addEventListener('submit', (event) => {
+// Calls the judge. Resolves to { winner, reasoning }, or throws an Error whose
+// message is safe to show the user.
+async function requestVerdict(fighter1, fighter2) {
+  let response;
+  try {
+    response = await fetch('/api/fight', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fighter1, fighter2 }),
+    });
+  } catch {
+    throw new Error("Couldn't reach the arena. Check your connection and try again.");
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (response.status === 429) {
+    throw new Error(data.error || 'Whoa, slow down! Wait a minute and try again.');
+  }
+  if (!response.ok) {
+    throw new Error(data.error || 'Something went wrong. Give it another go.');
+  }
+  return data;
+}
+
+form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (fightButton.disabled) return; // a fight is already in progress
   clearFormError();
 
   const fighter1 = fighter1Input.value.trim();
@@ -59,14 +86,20 @@ form.addEventListener('submit', (event) => {
   const error2 = validateName(fighter2, 'Fighter 2');
   if (error2) return showFormError(error2, fighter2Input);
 
+  fightButton.disabled = true;
   showView('loading');
 
-  // Stage 1: fake verdict. Replaced by a real /api/verdict call in Stage 3.
-  setTimeout(() => {
-    resultWinner.textContent = fighter1;
+  try {
+    const verdict = await requestVerdict(fighter1, fighter2);
+    resultWinner.textContent = verdict.winner;
     resultMatchup.textContent = `${fighter1} vs ${fighter2}`;
+    resultReasoning.textContent = verdict.reasoning;
     showView('result');
-  }, FAKE_LOADING_MS);
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    fightButton.disabled = false;
+  }
 });
 
 // Clear the error message as soon as the user starts fixing it.

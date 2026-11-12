@@ -13,12 +13,13 @@ Battleground: a web app for friends where you type two fighters, Claude's API ju
 ## Running locally
 
 ```
+npm install   # first time only
 vercel dev
 ```
 
 This serves the static page and the `api/` serverless functions together on localhost. Everything is built and tested locally. **Do not deploy to Vercel** during the build plan.
 
-There is no `package.json`, build step, linter or test suite. Testing is manual: use the browser, and call the API endpoints directly with curl. Secrets (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and the Upstash Redis keys from Stage 7) live in `.env`, which is gitignored.
+`package.json` only lists server dependencies and sets `"type": "module"` (the `api/` code uses `import`/`export`). There is no build step, linter or test suite. Testing is manual: use the browser, and call the API endpoints directly with curl (`curl -X POST localhost:3000/api/fight -H 'Content-Type: application/json' -d '{"fighter1":"cat","fighter2":"dog"}'`). Secrets (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) live in `.env`, which is gitignored.
 
 ## Architecture
 
@@ -30,10 +31,10 @@ There is no `package.json`, build step, linter or test suite. Testing is manual:
 - **Endpoints:** every file in `api/` becomes an endpoint, except files and folders starting with `_`. Shared code goes in `api/_lib/`.
 - **Judge prompt:** `api/_lib/judge-prompt.js` exports the judge's system prompt and `buildJudgeMessage()`. That function wraps the fighter names in `<fighter_1>`/`<fighter_2>` tags, and the prompt treats whatever is inside them as names, never as instructions.
 - **Judging rules:** the judge must always pick one winner (even for identical matchups), give 2–4 sentences of logical but comedic reasoning, and mention only the two fighters.
-- **Reply shape:** the system prompt deliberately has no JSON formatting instructions. The `{ winner, reasoning }` shape is set and checked by a zod schema on the server. `winner` must exactly match one of the two names entered.
-- **Planned endpoints:** `api/verdict.js` (Claude) and `api/image.js` (OpenAI). Images come back as **base64**, never URLs, so the client can compress them on a canvas before saving them.
+- **Reply shape:** the system prompt deliberately has no JSON formatting instructions. In `api/fight.js`, a zod schema passed to Claude's native structured outputs (`client.beta.messages.parse` + `betaZodOutputFormat`) sets the `{ winner, reasoning }` shape. The server then checks that `winner` matches one of the two names entered, and returns the name as the user typed it.
+- **Endpoints:** `api/fight.js` (the verdict; the build plan calls it `/api/verdict`) and, later, `api/image.js` (OpenAI). Images come back as **base64**, never URLs, so the client can compress them on a canvas before saving them.
 
 **Storage:** the BattleDex is a single versioned localStorage key, `{ version: 1, fighters: [{ id, name, nameKey, image, createdAt }] }`.
 - `nameKey` is the name lowercased with extra spaces trimmed. It is used to reuse saved art instead of calling the image API again.
 
-**Rate limiting:** 5 requests per minute per IP on both endpoints, counted in Upstash Redis (not in function memory).
+**Rate limiting:** 5 requests per minute per IP, counted in Upstash Redis (not in function memory). `api/_lib/rate-limit.js` exports `checkRateLimit(req, name)`, and each endpoint passes its own `name`, so each endpoint has its own count.
