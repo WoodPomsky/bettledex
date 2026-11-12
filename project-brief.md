@@ -26,5 +26,4 @@ I would eventually like a real backend where BattleDex characters sync across de
 - **BattleDex stores fighters, not fights**: each saved entry is a fighter (name + image), so it can be re-used for re-fights later.
 - **Saved fighters keep their art**: if a fighter is already in the BattleDex, its saved image is reused instead of generating a new one.
 - **Image storage**: images are downsized and compressed on the client (canvas resize + JPEG/WebP quality) before saving to localStorage, so they stay under the browser storage quota.
-- **Rate limiting**: 5 requests per minute per IP. Will be added later in the project.
 - **Budget**: no fixed ceiling for now.

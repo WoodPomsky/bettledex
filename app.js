@@ -63,9 +63,6 @@ async function requestVerdict(fighter1, fighter2) {
 
   const data = await response.json().catch(() => ({}));
 
-  if (response.status === 429) {
-    throw new Error(data.error || 'Whoa, slow down! Wait a minute and try again.');
-  }
   if (!response.ok) {
     throw new Error(data.error || 'Something went wrong. Give it another go.');
   }

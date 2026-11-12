@@ -1,7 +1,7 @@
 // System prompt for the Battleground judge (Stage 2).
 // Lives in api/_lib/ because Vercel does not turn files or folders that start
 // with "_" into endpoints.
-// Stage 6 hardens this further (prompt-injection rules, stricter validation).
+// Stage 5 hardens this further (prompt-injection rules, stricter validation).
 
 export const JUDGE_SYSTEM_PROMPT = `You are the judge of Battleground, a game where friends pick two fighters and you decide who wins the fight. Your ONLY job is to decide fights between two fighters and explain why.
 

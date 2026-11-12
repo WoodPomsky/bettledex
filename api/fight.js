@@ -6,7 +6,6 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 
 import { JUDGE_SYSTEM_PROMPT, buildJudgeMessage } from "./_lib/judge-prompt.js";
-import { checkRateLimit } from "./_lib/rate-limit.js";
 
 const MAX_NAME_LENGTH = 100;
 
@@ -59,21 +58,7 @@ export default async function handler(req, res) {
   const fighter1 = body.fighter1.trim();
   const fighter2 = body.fighter2.trim();
 
-  // 2. Rate limit (5 per minute per IP).
-  try {
-    const { allowed, retryAfterSeconds } = await checkRateLimit(req, "fight");
-    if (!allowed) {
-      res.setHeader("Retry-After", String(retryAfterSeconds));
-      return res.status(429).json({
-        error: `Whoa, slow down! The judge needs a breather. Try again in ${retryAfterSeconds} seconds.`,
-      });
-    }
-  } catch (err) {
-    console.error("Rate limiter failed:", err);
-    return res.status(500).json({ error: "The arena gates are stuck. Try again in a moment." });
-  }
-
-  // 3. Ask the judge.
+  // 2. Ask the judge.
   let response;
   try {
     response = await client.beta.messages.parse({
@@ -114,7 +99,7 @@ export default async function handler(req, res) {
     return res.status(502).json({ error: "The judge mumbled something unreadable. Try again." });
   }
 
-  // 4. The winner must be one of the two fighters. Return the name exactly as
+  // 3. The winner must be one of the two fighters. Return the name exactly as
   // the user typed it, even if the judge changed the capitalisation.
   const winnerKey = normalise(verdict.winner);
   const winner =
