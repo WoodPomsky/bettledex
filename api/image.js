@@ -24,7 +24,7 @@ function readBody(req) {
 function imageFailed(res, status = 502) {
   return res.status(status).json({
     error: "image_failed",
-    message: "The art didn't come through. Try again.",
+    message: "The court artist's ink ran dry! Fight again for a fresh sketch.",
   });
 }
 
@@ -37,11 +37,11 @@ export default async function handler(req, res) {
   // 1. Check the input.
   const { fighter } = readBody(req);
   if (typeof fighter !== "string" || fighter.trim().length === 0) {
-    return res.status(400).json({ error: "The fighter needs a name." });
+    return res.status(400).json({ error: "This fighter hasn't stepped into the ring yet. Give them a name!" });
   }
   const name = fighter.trim();
   if (name.length > MAX_NAME_LENGTH) {
-    return res.status(400).json({ error: `The fighter's name is too long (max ${MAX_NAME_LENGTH} characters).` });
+    return res.status(400).json({ error: `This fighter's name won't fit on the scoreboard! Keep it to ${MAX_NAME_LENGTH} characters.` });
   }
 
   if (!process.env.OPENAI_API_KEY) {
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
       console.warn(`Image blocked by moderation for "${name}"`);
       return res.status(422).json({
         error: "moderation_blocked",
-        message: "The artist refused to draw this one.",
+        message: "The court artist threw down their quill and refused to draw this one!",
       });
     }
     console.error(`OpenAI image error ${response.status}:`, data?.error?.message || data);

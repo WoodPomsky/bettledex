@@ -41,9 +41,11 @@
 
     <!-- View 2: loading -->
     <section id="view-loading" class="view" data-view="loading" hidden>
-      <div class="card card-center" aria-live="polite">
+      <div class="card card-center">
         <div class="spinner" aria-hidden="true"></div>
-        <p class="loading-text">Fighting...</p>
+        <!-- The visible phrase rotates, so screen readers get one steady message instead. -->
+        <p class="loading-text" aria-hidden="true">Fighting...</p>
+        <p class="sr-only" role="status">The fight is on. The judge is deciding.</p>
       </div>
     </section>
 
@@ -109,9 +111,9 @@
     <!-- View 5: error -->
     <section id="view-error" class="view" data-view="error" hidden>
       <div class="card card-center" role="alert">
-        <p class="error-title">The arena collapsed.</p>
-        <p id="error-message" class="error-message">Something went wrong. Give it another go.</p>
-        <button type="button" class="btn btn-secondary" data-action="restart">Try again</button>
+        <p class="error-title">Hold the bell!</p>
+        <p id="error-message" class="error-message">Something went sideways in the arena! Dust yourself off and step back into the ring.</p>
+        <button type="button" class="btn btn-secondary" data-action="restart">Back to the ring</button>
       </div>
     </section>
   </main>

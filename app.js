@@ -16,21 +16,88 @@ const artSlots = [
   document.querySelector('[data-art-slot="2"]'),
 ];
 
+const GENERIC_ERROR = 'Something went sideways in the arena! Dust yourself off and step back into the ring.';
+
 const ART_MESSAGES = {
-  loading: 'Sketching...',
-  blocked: 'The artist refused to draw this one.',
-  failed: "The art didn't come through. Try again.",
+  blocked: 'The court artist threw down their quill and refused to draw this one!',
+  failed: "The court artist's ink ran dry! Fight again for a fresh sketch.",
 };
+
+// Rotating phrases shown while we wait. Each list is shuffled every time it starts.
+const LOADING_PHRASES = [
+  'Sharpening claws...',
+  'Consulting the ancient scrolls...',
+  'Polishing the championship belt...',
+  'Checking the tale of the tape...',
+  'Weighing in the contenders...',
+  'Stretching hamstrings...',
+  'Rehearsing victory poses...',
+  'Calculating snack-based stamina...',
+  'Reviewing the instant replay...',
+  'Bribing the referee... kidding!',
+  'Sweeping up after the last bout...',
+  'Ringing the bell...',
+];
+
+const ART_PHRASES = [
+  'Sharpening the quills...',
+  'Mixing the inks...',
+  'Asking the fighter to hold still...',
+  'Consulting a field guide...',
+  'Shading the menacing bits...',
+  'Pressing the plate...',
+];
+
+const PHRASE_INTERVAL_MS = 2200;
 
 // Each fight gets a number, so late images from an earlier fight are ignored.
 let currentFight = 0;
 let imageController = null;
+
+function shuffled(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function setPhrase(element, text) {
+  element.textContent = text;
+  // Restart the fade-in animation for each new phrase.
+  element.classList.remove('phrase-in');
+  void element.offsetWidth;
+  element.classList.add('phrase-in');
+}
+
+// Cycles an element through the phrases in random order. Returns a stop function.
+function startPhrases(element, phrases) {
+  const order = shuffled(phrases);
+  let index = 0;
+  setPhrase(element, order[0]);
+  const timer = setInterval(() => {
+    index = (index + 1) % order.length;
+    setPhrase(element, order[index]);
+  }, PHRASE_INTERVAL_MS);
+  return () => {
+    clearInterval(timer);
+    element.classList.remove('phrase-in');
+  };
+}
+
+const loadingText = document.querySelector('.loading-text');
+let stopLoadingPhrases = null;
 
 // Show exactly one view and hide all the others.
 function showView(name) {
   views.forEach((view) => {
     view.hidden = view.dataset.view !== name;
   });
+
+  // The loading phrases only run while the loading view is showing.
+  stopLoadingPhrases?.();
+  stopLoadingPhrases = name === 'loading' ? startPhrases(loadingText, LOADING_PHRASES) : null;
 }
 
 function showFormError(message, input) {
@@ -51,13 +118,13 @@ function clearFormError() {
 
 // Returns an error message, or null if the name is fine.
 function validateName(name, label) {
-  if (name.length === 0) return `${label} needs a name.`;
-  if (name.length > MAX_NAME_LENGTH) return `${label} is too long (max ${MAX_NAME_LENGTH} characters).`;
+  if (name.length === 0) return `${label} hasn't stepped into the ring yet. Give them a name!`;
+  if (name.length > MAX_NAME_LENGTH) return `${label}'s name won't fit on the scoreboard! Keep it to ${MAX_NAME_LENGTH} characters.`;
   return null;
 }
 
 function showError(message) {
-  errorMessage.textContent = message || 'Something went wrong. Give it another go.';
+  errorMessage.textContent = message || GENERIC_ERROR;
   showView('error');
 }
 
@@ -72,13 +139,13 @@ async function requestVerdict(fighter1, fighter2) {
       body: JSON.stringify({ fighter1, fighter2 }),
     });
   } catch {
-    throw new Error("Couldn't reach the arena. Check your connection and try again.");
+    throw new Error("We can't reach the arena! Check your connection and step back into the ring.");
   }
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Something went wrong. Give it another go.');
+    throw new Error(data.error || GENERIC_ERROR);
   }
   return data;
 }
@@ -115,7 +182,7 @@ const COMPRESS_MAX_SIZE = 512; // px, longest side
 const COMPRESS_TARGET_BYTES = 100 * 1024;
 // Tried in order until the image is under the target size.
 const COMPRESS_QUALITIES = [0.8, 0.65, 0.5, 0.35];
-const COMPRESS_FAILED_MESSAGE = "Couldn't prepare the art for saving. Try again.";
+const COMPRESS_FAILED_MESSAGE = 'The art got crumpled on its way to the BattleDex! Try saving again.';
 
 // Decoded size of a base64 data URL, in bytes.
 function dataUrlBytes(dataUrl) {
@@ -190,8 +257,8 @@ async function compressImage(src) {
 
 const DEX_KEY = 'battleground.battledex';
 const DEX_VERSION = 1;
-const DEX_FULL_MESSAGE = 'Your BattleDex is full. Delete a fighter to make room.';
-const DEX_UNAVAILABLE_MESSAGE = "Couldn't save to your BattleDex. Your browser may be blocking storage.";
+const DEX_FULL_MESSAGE = 'The BattleDex is packed to the rafters! Delete a fighter to make room for a new champion.';
+const DEX_UNAVAILABLE_MESSAGE = 'The BattleDex doors are locked! Your browser may be blocking storage.';
 
 // "  Angry   GOOSE " -> "angry goose"
 function toNameKey(name) {
@@ -242,13 +309,26 @@ function writeDex(fighters) {
   }
 }
 
+// Stop functions for each art slot's rotating "loading" phrases.
+const artPhraseStops = new Map();
+
 // Puts one art slot into a state: loading, ready, blocked or failed.
 function setArt(slot, name, { state, src, message }) {
   const img = slot.querySelector('.art-image');
+  const status = slot.querySelector('.art-status');
   slot.dataset.state = state;
   slot.dataset.fighter = name;
   slot.querySelector('.art-name').textContent = name;
-  slot.querySelector('.art-status').textContent = message || ART_MESSAGES[state] || '';
+
+  artPhraseStops.get(slot)?.();
+  artPhraseStops.delete(slot);
+  // aria-busy keeps screen readers quiet while the phrases rotate.
+  slot.setAttribute('aria-busy', String(state === 'loading'));
+  if (state === 'loading') {
+    artPhraseStops.set(slot, startPhrases(status, ART_PHRASES));
+  } else {
+    status.textContent = message || ART_MESSAGES[state] || '';
+  }
 
   if (state === 'ready') {
     img.src = src;

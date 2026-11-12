@@ -26,9 +26,9 @@ function normalise(name) {
 
 // Returns an error message, or null if the name is fine.
 function validateName(name, label) {
-  if (typeof name !== "string" || name.trim().length === 0) return `${label} needs a name.`;
+  if (typeof name !== "string" || name.trim().length === 0) return `${label} hasn't stepped into the ring yet. Give them a name!`;
   if (name.trim().length > MAX_NAME_LENGTH) {
-    return `${label} is too long (max ${MAX_NAME_LENGTH} characters).`;
+    return `${label}'s name won't fit on the scoreboard! Keep it to ${MAX_NAME_LENGTH} characters.`;
   }
   return null;
 }
@@ -79,25 +79,25 @@ export default async function handler(req, res) {
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) {
       console.error("Claude rate limit:", err.message);
-      return res.status(503).json({ error: "The judge is swamped right now. Try again shortly." });
+      return res.status(503).json({ error: "The judge is buried under a mountain of challengers! Give it a moment, then ring the bell again." });
     }
     if (err instanceof Anthropic.APIError) {
       console.error(`Claude API error ${err.status}:`, err.message);
-      return res.status(502).json({ error: "The judge didn't show up. Try again." });
+      return res.status(502).json({ error: "The judge failed to show up for the main event! Ring the bell again." });
     }
     console.error("Unexpected error calling Claude:", err);
-    return res.status(500).json({ error: "Something went wrong. Give it another go." });
+    return res.status(500).json({ error: "Something went sideways in the arena! Dust yourself off and step back into the ring." });
   }
 
   if (response.stop_reason === "refusal") {
     console.warn("Judge refused:", response.stop_details);
-    return res.status(422).json({ error: "The judge refused to rule on this one. Try different fighters." });
+    return res.status(422).json({ error: "The judge took one look at this matchup and walked out! Try a different pair of contenders." });
   }
 
   const verdict = response.parsed_output;
   if (!verdict) {
     console.error("Could not parse verdict. stop_reason:", response.stop_reason);
-    return res.status(502).json({ error: "The judge mumbled something unreadable. Try again." });
+    return res.status(502).json({ error: "The judge's verdict came out as pure gibberish! Ring the bell for a rematch." });
   }
 
   // 3. The winner must be one of the two fighters. Return the name exactly as
@@ -110,7 +110,7 @@ export default async function handler(req, res) {
 
   if (!winner || reasoning.length === 0) {
     console.error("Invalid verdict from judge:", verdict);
-    return res.status(502).json({ error: "The judge's verdict made no sense. Try again." });
+    return res.status(502).json({ error: "The judge crowned someone who wasn't even in the ring! Ring the bell for a rematch." });
   }
 
   return res.status(200).json({ winner, reasoning });

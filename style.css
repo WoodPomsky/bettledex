@@ -345,7 +345,29 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 
 .btn-delete:hover { background: rgba(255, 107, 129, 0.12); }
 
+/* Rotating loading phrases */
+.phrase-in { animation: phrase-in 0.35s ease-out; }
+
+@keyframes phrase-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Visible to screen readers only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .spinner,
   .art-spinner { animation-duration: 2.4s; }
+  .phrase-in { animation: none; }
 }
