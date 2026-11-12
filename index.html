@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Battleground</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <h1 class="logo">Battleground</h1>
+      <p class="tagline">Two fighters enter. One verdict leaves.</p>
+    </header>
+
+    <!-- View 1: input form (visible on load) -->
+    <section id="view-form" class="view" data-view="form">
+      <form id="fight-form" class="card" novalidate>
+        <div class="field">
+          <label for="fighter1">Fighter 1</label>
+          <input id="fighter1" name="fighter1" type="text" maxlength="100"
+                 placeholder="e.g. A very angry goose" autocomplete="off" required>
+        </div>
+
+        <div class="versus" aria-hidden="true">VS</div>
+
+        <div class="field">
+          <label for="fighter2">Fighter 2</label>
+          <input id="fighter2" name="fighter2" type="text" maxlength="100"
+                 placeholder="e.g. 10 cows" autocomplete="off" required>
+        </div>
+
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+
+        <button type="submit" class="btn btn-primary">Fight!</button>
+      </form>
+    </section>
+
+    <!-- View 2: loading -->
+    <section id="view-loading" class="view" data-view="loading" hidden>
+      <div class="card card-center" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="loading-text">Fighting...</p>
+      </div>
+    </section>
+
+    <!-- View 3: result (fake verdict for now) -->
+    <section id="view-result" class="view" data-view="result" hidden>
+      <article class="card card-center">
+        <p class="result-label">Winner</p>
+        <h2 id="result-winner" class="result-winner">A very angry goose</h2>
+        <p id="result-matchup" class="result-matchup">A very angry goose vs 10 cows</p>
+        <p id="result-reasoning" class="result-reasoning">
+          The cows held a meeting to discuss strategy. The goose did not attend the meeting.
+          The goose attacked the meeting. By the time the cows had agreed on an agenda,
+          the goose was standing on the tallest cow, honking in victory.
+        </p>
+        <button type="button" class="btn btn-secondary" data-action="restart">Fight again</button>
+      </article>
+    </section>
+
+    <!-- View 4: error -->
+    <section id="view-error" class="view" data-view="error" hidden>
+      <div class="card card-center" role="alert">
+        <p class="error-title">The arena collapsed.</p>
+        <p id="error-message" class="error-message">Something went wrong. Give it another go.</p>
+        <button type="button" class="btn btn-secondary" data-action="restart">Try again</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
