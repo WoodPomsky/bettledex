@@ -179,10 +179,82 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 
 .result-reasoning { margin: 0; text-align: left; }
 
+/* Fighter art */
+.fighter-art-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.fighter-art { margin: 0; min-width: 0; }
+
+.art-frame {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 2px solid transparent;
+}
+
+.fighter-art.is-winner .art-frame { border-color: var(--accent-2); }
+
+.art-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.art-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+}
+
+.fighter-art[data-state="ready"] .art-placeholder { display: none; }
+
+.art-spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid rgba(255, 255, 255, 0.08);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.fighter-art:not([data-state="loading"]) .art-spinner { display: none; }
+
+.art-icon { display: none; font-size: 2rem; line-height: 1; }
+.fighter-art[data-state="blocked"] .art-icon,
+.fighter-art[data-state="failed"] .art-icon { display: block; }
+.fighter-art[data-state="blocked"] .art-icon::before { content: "🚫"; }
+.fighter-art[data-state="failed"] .art-icon::before { content: "🖼️"; }
+
+.art-status { margin: 0; font-size: 0.85rem; color: var(--muted); }
+.fighter-art[data-state="blocked"] .art-status { color: var(--accent-2); }
+
+.art-name {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.fighter-art.is-winner .art-name { color: var(--accent-2); }
+
 /* Error */
 .error-title { margin: 0 0 8px; font-size: 1.3rem; font-weight: 800; color: var(--danger); }
 .error-message { margin: 0; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner { animation-duration: 2.4s; }
+  .spinner,
+  .art-spinner { animation-duration: 2.4s; }
 }

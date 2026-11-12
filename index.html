@@ -44,12 +44,39 @@
       </div>
     </section>
 
-    <!-- View 3: result (fake verdict for now) -->
+    <!-- View 3: result -->
     <section id="view-result" class="view" data-view="result" hidden>
       <article class="card card-center">
         <p class="result-label">Winner</p>
         <h2 id="result-winner" class="result-winner">A very angry goose</h2>
         <p id="result-matchup" class="result-matchup">A very angry goose vs 10 cows</p>
+
+        <!-- Fighter art. Each slot is loading, ready, blocked or failed (data-state). -->
+        <div class="fighter-art-row">
+          <figure class="fighter-art" data-art-slot="1" data-state="loading" aria-live="polite">
+            <div class="art-frame">
+              <img class="art-image" alt="" hidden>
+              <div class="art-placeholder">
+                <div class="art-spinner" aria-hidden="true"></div>
+                <span class="art-icon" aria-hidden="true"></span>
+                <p class="art-status">Sketching...</p>
+              </div>
+            </div>
+            <figcaption class="art-name">A very angry goose</figcaption>
+          </figure>
+          <figure class="fighter-art" data-art-slot="2" data-state="loading" aria-live="polite">
+            <div class="art-frame">
+              <img class="art-image" alt="" hidden>
+              <div class="art-placeholder">
+                <div class="art-spinner" aria-hidden="true"></div>
+                <span class="art-icon" aria-hidden="true"></span>
+                <p class="art-status">Sketching...</p>
+              </div>
+            </div>
+            <figcaption class="art-name">10 cows</figcaption>
+          </figure>
+        </div>
+
         <p id="result-reasoning" class="result-reasoning">
           The cows held a meeting to discuss strategy. The goose did not attend the meeting.
           The goose attacked the meeting. By the time the cows had agreed on an agenda,
