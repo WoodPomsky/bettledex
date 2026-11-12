@@ -38,3 +38,5 @@ This serves the static page and the `api/` serverless functions together on loca
 - `nameKey` is the name lowercased with extra spaces trimmed. It is used to reuse saved art instead of calling the image API again.
 
 **Rate limiting:** 5 requests per minute per IP, counted in Upstash Redis (not in function memory). `api/_lib/rate-limit.js` exports `checkRateLimit(req, name)`, and each endpoint passes its own `name`, so each endpoint has its own count.
+- **Local off switch:** `RATE_LIMIT_DISABLED=true` in `.env` skips Redis entirely and logs a warning at startup. It is for local use only. Only the exact value `true` turns it on.
+- **Fails closed:** without the switch, missing Upstash keys block every request with a 500 ("The arena gates are stuck"). Keep it this way. Don't make missing keys silently skip the limit.
