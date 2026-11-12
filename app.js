@@ -11,9 +11,13 @@ const resultWinner = document.getElementById('result-winner');
 const resultMatchup = document.getElementById('result-matchup');
 const resultReasoning = document.getElementById('result-reasoning');
 const errorMessage = document.getElementById('error-message');
-const artSlots = [
-  document.querySelector('[data-art-slot="1"]'),
-  document.querySelector('[data-art-slot="2"]'),
+// The result page shows the winner and the loser in fixed places.
+const winnerSlot = document.querySelector('[data-art-slot="winner"]');
+const loserSlot = document.querySelector('[data-art-slot="loser"]');
+const artSlots = [winnerSlot, loserSlot];
+const loadingNames = [
+  document.getElementById('loading-fighter1'),
+  document.getElementById('loading-fighter2'),
 ];
 
 const GENERIC_ERROR = 'Something went sideways in the arena! Dust yourself off and step back into the ring.';
@@ -96,6 +100,11 @@ function showView(name) {
   // The loading phrases only run while the loading view is showing.
   stopLoadingPhrases?.();
   stopLoadingPhrases = name === 'loading' ? startPhrases(loadingText, LOADING_PHRASES) : null;
+
+  // The header button opens the BattleDex, and becomes "Back" while it's open.
+  const inDex = name === 'battledex';
+  dexLabel.textContent = inDex ? 'Back' : 'BattleDex';
+  dexCount.hidden = inDex;
 }
 
 function showFormError(message, input) {
@@ -333,7 +342,8 @@ function setArt(slot, name, { state, src, message }) {
 // BattleDex UI (Stage 8)
 // ---------------------------------------------------------------------------
 
-const dexButton = document.querySelector('[data-action="open-dex"]');
+const dexButton = document.querySelector('[data-action="toggle-dex"]');
+const dexLabel = dexButton.querySelector('.dex-label');
 const dexCount = document.getElementById('dex-count');
 const dexList = document.getElementById('dex-list');
 const dexEmpty = document.getElementById('dex-empty');
@@ -361,19 +371,35 @@ function refreshSaveButtons(fighters = loadDex()) {
   });
 }
 
+// Each card leans a little, cycling through these angles.
+const DEX_TILTS = [-1.2, 1, 0.7, -0.8];
+
 function renderDex(fighters) {
   dexEmpty.hidden = fighters.length > 0;
-  const newestFirst = [...fighters].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  // Specimen numbers count up in the order fighters were saved (oldest is No. 001),
+  // but the newest are shown first.
+  const oldestFirst = [...fighters].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const numbered = oldestFirst.map((fighter, i) => ({ fighter, no: String(i + 1).padStart(3, '0') }));
+  const newestFirst = numbered.reverse();
   dexList.replaceChildren(
-    ...newestFirst.map((fighter) => {
+    ...newestFirst.map(({ fighter, no }, i) => {
       const item = document.createElement('li');
       item.className = 'dex-item';
+      item.style.setProperty('--tilt', `${DEX_TILTS[i % DEX_TILTS.length]}deg`);
 
       const img = document.createElement('img');
       img.className = 'dex-image';
       img.src = fighter.image;
       img.alt = `Art of ${fighter.name}`;
       img.loading = 'lazy';
+
+      const meta = document.createElement('p');
+      meta.className = 'dex-meta';
+      const label = document.createElement('span');
+      label.textContent = 'Specimen';
+      const number = document.createElement('span');
+      number.textContent = `No. ${no}`;
+      meta.append(label, number);
 
       const name = document.createElement('p');
       name.className = 'dex-name';
@@ -391,7 +417,7 @@ function renderDex(fighters) {
       remove.textContent = 'Delete';
       remove.setAttribute('aria-label', `Delete ${fighter.name}`);
 
-      item.append(img, name, date, remove);
+      item.append(img, meta, name, date, remove);
       return item;
     }),
   );
@@ -451,9 +477,11 @@ function currentView() {
   return [...views].find((view) => !view.hidden)?.dataset.view;
 }
 
-function openDex() {
+// Opens the BattleDex, or goes back to wherever you came from if it's already open.
+function toggleDex() {
   const from = currentView();
-  if (from === 'battledex' || from === 'loading') return;
+  if (from === 'loading') return;
+  if (from === 'battledex') return showView(viewBeforeDex);
   viewBeforeDex = from || 'form';
   setStatus(dexStatus, '');
   refreshDex();
@@ -469,8 +497,7 @@ dexList.addEventListener('click', (event) => {
   if (button) deleteFighter(button.dataset.id);
 });
 
-dexButton.addEventListener('click', openDex);
-document.querySelector('[data-action="close-dex"]').addEventListener('click', () => showView(viewBeforeDex));
+dexButton.addEventListener('click', toggleDex);
 
 // Keep this tab in sync if the BattleDex changes in another tab.
 window.addEventListener('storage', (event) => {
@@ -494,6 +521,8 @@ form.addEventListener('submit', async (event) => {
   fightButton.disabled = true;
   dexButton.disabled = true; // don't leave the loading view mid-fight
   setStatus(saveStatus, '');
+  loadingNames[0].textContent = fighter1;
+  loadingNames[1].textContent = fighter2;
   showView('loading');
 
   // Start a new fight and drop any images still loading from the last one.
@@ -513,16 +542,14 @@ form.addEventListener('submit', async (event) => {
       ...imageRequests,
     ]);
     if (fightId !== currentFight) return;
-    fighters.forEach((name, i) => {
-      artSlots[i].classList.remove('is-winner');
-      setArt(artSlots[i], name, images[i]);
-    });
+    // The server returns the winner exactly as typed. For identical names, fighter 1 wins.
+    const winnerIndex = verdict.winner === fighter1 ? 0 : 1;
+    const loserIndex = 1 - winnerIndex;
+    setArt(winnerSlot, fighters[winnerIndex], images[winnerIndex]);
+    setArt(loserSlot, fighters[loserIndex], images[loserIndex]);
     resultWinner.textContent = verdict.winner;
     resultMatchup.textContent = `${fighter1} vs ${fighter2}`;
     resultReasoning.textContent = verdict.reasoning;
-    // The server returns the winner exactly as typed. For identical names, slot 1 wins.
-    const winnerIndex = verdict.winner === fighter1 ? 0 : 1;
-    artSlots[winnerIndex].classList.add('is-winner');
     showView('result');
   } catch (error) {
     if (fightId !== currentFight) return;

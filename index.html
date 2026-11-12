@@ -4,103 +4,154 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Battleground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=La+Belle+Aurore&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="app">
     <header class="app-header">
-      <h1 class="logo">Battleground</h1>
-      <p class="tagline">Two fighters enter. One verdict leaves.</p>
-      <button type="button" class="btn btn-nav" data-action="open-dex">
-        BattleDex <span id="dex-count" class="dex-count">0</span>
+      <div class="plaque">
+        <h1 class="logo">Battleground</h1>
+        <p class="tagline">Two fighters enter. One verdict leaves.</p>
+      </div>
+      <!-- Opens the BattleDex, and reads "Back" while the BattleDex is showing. -->
+      <button type="button" class="btn btn-dex" data-action="toggle-dex">
+        <span class="dex-label">BattleDex</span> <span id="dex-count" class="dex-count">0</span>
       </button>
     </header>
 
     <!-- View 1: input form (visible on load) -->
-    <section id="view-form" class="view" data-view="form">
-      <form id="fight-form" class="card" novalidate>
-        <div class="field">
-          <label for="fighter1">Fighter 1</label>
-          <input id="fighter1" name="fighter1" type="text" maxlength="100"
-                 placeholder="e.g. A very angry goose" autocomplete="off" required>
+    <section id="view-form" class="view fade" data-view="form">
+      <form id="fight-form" novalidate>
+        <div class="entry-sheet">
+          <p class="entry-heading">Entry for the Day's Contest</p>
+          <div class="entry-half entry-half-1">
+            <label for="fighter1">Fighter 1</label>
+            <input id="fighter1" name="fighter1" type="text" maxlength="100"
+                   placeholder="e.g. A very angry goose" autocomplete="off" required>
+          </div>
+          <div class="versus" aria-hidden="true">VS</div>
+          <div class="entry-half entry-half-2">
+            <label for="fighter2">Fighter 2</label>
+            <input id="fighter2" name="fighter2" type="text" maxlength="100"
+                   placeholder="e.g. 10 cows" autocomplete="off" required>
+          </div>
         </div>
 
-        <div class="versus" aria-hidden="true">VS</div>
-
-        <div class="field">
-          <label for="fighter2">Fighter 2</label>
-          <input id="fighter2" name="fighter2" type="text" maxlength="100"
-                 placeholder="e.g. 10 cows" autocomplete="off" required>
+        <div class="form-footer">
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+          <button type="submit" class="btn btn-fight">FIGHT!</button>
         </div>
-
-        <p id="form-error" class="form-error" role="alert" hidden></p>
-
-        <button type="submit" class="btn btn-primary">Fight!</button>
       </form>
     </section>
 
     <!-- View 2: loading -->
-    <section id="view-loading" class="view" data-view="loading" hidden>
-      <div class="card card-center">
-        <div class="spinner" aria-hidden="true"></div>
-        <!-- The visible phrase rotates, so screen readers get one steady message instead. -->
-        <p class="loading-text" aria-hidden="true">Fighting...</p>
+    <section id="view-loading" class="view fade" data-view="loading" hidden>
+      <div class="sheet sheet-graph">
+        <p class="eyebrow">The Judge is Deliberating</p>
+        <div class="loading-stage">
+          <div class="sketch-plate sketch-plate-1">
+            <div class="sketch-box">
+              <span class="sketch-label">Sketching</span>
+              <span id="loading-fighter1" class="sketch-name">Fighter 1</span>
+            </div>
+            <p class="sketch-caption">Plate I, in pencil</p>
+          </div>
+
+          <div class="compass" aria-hidden="true">
+            <div class="compass-ring"></div>
+            <span class="compass-n">N</span><span class="compass-s">S</span>
+            <span class="compass-w">W</span><span class="compass-e">E</span>
+            <div class="compass-needle swing"><div class="needle-n"></div><div class="needle-s"></div></div>
+            <div class="compass-pin"></div>
+          </div>
+
+          <div class="sketch-plate sketch-plate-2">
+            <div class="sketch-box">
+              <span class="sketch-label">Sketching</span>
+              <span id="loading-fighter2" class="sketch-name">Fighter 2</span>
+            </div>
+            <p class="sketch-caption">Plate II, in pencil</p>
+          </div>
+
+          <!-- The visible phrase rotates, so screen readers get one steady message instead. -->
+          <p class="loading-text" aria-hidden="true">Fighting...</p>
+        </div>
         <p class="sr-only" role="status">The fight is on. The judge is deciding.</p>
       </div>
     </section>
 
     <!-- View 3: result -->
-    <section id="view-result" class="view" data-view="result" hidden>
-      <article class="card card-center">
-        <p class="result-label">Winner</p>
-        <h2 id="result-winner" class="result-winner">A very angry goose</h2>
-        <p id="result-matchup" class="result-matchup">A very angry goose vs 10 cows</p>
-
-        <!-- Fighter art. Each slot is loading, ready, blocked or failed (data-state). -->
-        <div class="fighter-art-row">
-          <figure class="fighter-art" data-art-slot="1" data-state="loading" aria-live="polite">
-            <div class="art-frame">
-              <img class="art-image" alt="" hidden>
-              <div class="art-placeholder">
-                <div class="art-spinner" aria-hidden="true"></div>
-                <span class="art-icon" aria-hidden="true"></span>
-                <p class="art-status">Sketching...</p>
-              </div>
-            </div>
-            <figcaption class="art-name">A very angry goose</figcaption>
-            <button type="button" class="btn btn-save" data-action="save" hidden>Save to BattleDex</button>
-          </figure>
-          <figure class="fighter-art" data-art-slot="2" data-state="loading" aria-live="polite">
-            <div class="art-frame">
-              <img class="art-image" alt="" hidden>
-              <div class="art-placeholder">
-                <div class="art-spinner" aria-hidden="true"></div>
-                <span class="art-icon" aria-hidden="true"></span>
-                <p class="art-status">Sketching...</p>
-              </div>
-            </div>
-            <figcaption class="art-name">10 cows</figcaption>
-            <button type="button" class="btn btn-save" data-action="save" hidden>Save to BattleDex</button>
-          </figure>
+    <section id="view-result" class="view fade" data-view="result" hidden>
+      <article class="sheet sheet-result">
+        <div class="result-head">
+          <p class="eyebrow">The Victor</p>
+          <h2 id="result-winner" class="result-winner">A very angry goose</h2>
+          <p id="result-matchup" class="result-matchup">A very angry goose vs 10 cows</p>
         </div>
 
-        <p id="save-status" class="status-message" role="status" hidden></p>
+        <!-- Fighter art. Each slot is ready, blocked or failed (data-state). -->
+        <div class="result-grid">
+          <figure class="fighter-art fighter-winner" data-art-slot="winner" data-state="loading">
+            <div class="winner-mount">
+              <div class="winner-frame halo">
+                <div class="winner-inner">
+                  <div class="art-frame">
+                    <img class="art-image" alt="" hidden>
+                    <div class="art-placeholder">
+                      <span class="art-icon" aria-hidden="true"></span>
+                      <p class="art-status"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="seal sealin" aria-hidden="true"><span>VIC<br>TOR</span></div>
+              <div class="corner" aria-hidden="true"></div>
+            </div>
+            <figcaption class="art-name">A very angry goose</figcaption>
+            <button type="button" class="btn btn-save btn-save-winner" data-action="save" hidden>Save to BattleDex</button>
+          </figure>
 
-        <p id="result-reasoning" class="result-reasoning">
-          The cows held a meeting to discuss strategy. The goose did not attend the meeting.
-          The goose attacked the meeting. By the time the cows had agreed on an agenda,
-          the goose was standing on the tallest cow, honking in victory.
-        </p>
-        <button type="button" class="btn btn-secondary" data-action="restart">Fight again</button>
+          <div class="verdict">
+            <p class="verdict-label">The Judge's Verdict</p>
+            <p id="result-reasoning" class="result-reasoning">
+              The cows held a meeting to discuss strategy. The goose did not attend the meeting.
+              The goose attacked the meeting. By the time the cows had agreed on an agenda,
+              the goose was standing on the tallest cow, honking in victory.
+            </p>
+            <p id="save-status" class="status-message" role="status" hidden></p>
+            <button type="button" class="btn btn-green" data-action="restart">FIGHT AGAIN</button>
+          </div>
+
+          <figure class="fighter-art fighter-loser" data-art-slot="loser" data-state="loading">
+            <div class="loser-mount">
+              <div class="loser-frame">
+                <div class="art-frame">
+                  <img class="art-image" alt="" hidden>
+                  <div class="art-placeholder">
+                    <span class="art-icon" aria-hidden="true"></span>
+                    <p class="art-status"></p>
+                  </div>
+                </div>
+              </div>
+              <div class="strike" aria-hidden="true"></div>
+              <div class="defeated inkin" aria-hidden="true">DEFEATED</div>
+            </div>
+            <figcaption class="art-name">10 cows</figcaption>
+            <button type="button" class="btn btn-save btn-save-loser" data-action="save" hidden>Save to BattleDex</button>
+          </figure>
+        </div>
       </article>
     </section>
 
     <!-- View 4: BattleDex (saved fighters) -->
-    <section id="view-battledex" class="view" data-view="battledex" hidden>
-      <div class="card">
-        <div class="dex-header">
+    <section id="view-battledex" class="view fade" data-view="battledex" hidden>
+      <div class="sheet sheet-dex">
+        <div class="dex-head">
+          <p class="eyebrow">Catalogue of Specimens</p>
           <h2 class="dex-title">BattleDex</h2>
-          <button type="button" class="btn btn-secondary btn-small" data-action="close-dex">Back</button>
         </div>
         <p id="dex-status" class="status-message" role="status" hidden></p>
         <p id="dex-empty" class="dex-empty">No fighters saved yet. Hit "Save to BattleDex" under a fighter's art after a fight.</p>
@@ -109,11 +160,12 @@
     </section>
 
     <!-- View 5: error -->
-    <section id="view-error" class="view" data-view="error" hidden>
-      <div class="card card-center" role="alert">
+    <section id="view-error" class="view fade" data-view="error" hidden>
+      <div class="sheet sheet-error" role="alert">
+        <p class="eyebrow">A Notice from the Management</p>
         <p class="error-title">Hold the bell!</p>
         <p id="error-message" class="error-message">Something went sideways in the arena! Dust yourself off and step back into the ring.</p>
-        <button type="button" class="btn btn-secondary" data-action="restart">Back to the ring</button>
+        <button type="button" class="btn btn-green" data-action="restart">BACK TO THE RING</button>
       </div>
     </section>
   </main>
