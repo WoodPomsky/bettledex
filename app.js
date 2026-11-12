@@ -23,7 +23,8 @@ const ART_MESSAGES = {
   failed: "The court artist's ink ran dry! Fight again for a fresh sketch.",
 };
 
-// Rotating phrases shown while we wait. Each list is shuffled every time it starts.
+// Rotating phrases on the loading screen, which covers both the judge and the
+// artist. The list is reshuffled every fight.
 const LOADING_PHRASES = [
   'Sharpening claws...',
   'Consulting the ancient scrolls...',
@@ -37,9 +38,6 @@ const LOADING_PHRASES = [
   'Bribing the referee... kidding!',
   'Sweeping up after the last bout...',
   'Ringing the bell...',
-];
-
-const ART_PHRASES = [
   'Sharpening the quills...',
   'Mixing the inks...',
   'Asking the fighter to hold still...',
@@ -309,9 +307,6 @@ function writeDex(fighters) {
   }
 }
 
-// Stop functions for each art slot's rotating "loading" phrases.
-const artPhraseStops = new Map();
-
 // Puts one art slot into a state: loading, ready, blocked or failed.
 function setArt(slot, name, { state, src, message }) {
   const img = slot.querySelector('.art-image');
@@ -320,15 +315,7 @@ function setArt(slot, name, { state, src, message }) {
   slot.dataset.fighter = name;
   slot.querySelector('.art-name').textContent = name;
 
-  artPhraseStops.get(slot)?.();
-  artPhraseStops.delete(slot);
-  // aria-busy keeps screen readers quiet while the phrases rotate.
-  slot.setAttribute('aria-busy', String(state === 'loading'));
-  if (state === 'loading') {
-    artPhraseStops.set(slot, startPhrases(status, ART_PHRASES));
-  } else {
-    status.textContent = message || ART_MESSAGES[state] || '';
-  }
+  status.textContent = message || ART_MESSAGES[state] || '';
 
   if (state === 'ready') {
     img.src = src;
@@ -514,21 +501,22 @@ form.addEventListener('submit', async (event) => {
   imageController?.abort();
   imageController = new AbortController();
 
-  // Ask for both images at the same time as the verdict. Each slot fills in
-  // whenever its image arrives, which is usually well after the verdict.
+  // Ask for the verdict and both images at the same time, and stay on the
+  // loading screen until all three are back. requestImage never throws, so
+  // only a failed verdict rejects, and that shows the error straight away.
   const fighters = [fighter1, fighter2];
-  fighters.forEach((name, i) => {
-    const slot = artSlots[i];
-    slot.classList.remove('is-winner');
-    setArt(slot, name, { state: 'loading' });
-    requestImage(name, imageController.signal).then((result) => {
-      if (fightId === currentFight) setArt(slot, name, result);
-    });
-  });
+  const imageRequests = fighters.map((name) => requestImage(name, imageController.signal));
 
   try {
-    const verdict = await requestVerdict(fighter1, fighter2);
+    const [verdict, ...images] = await Promise.all([
+      requestVerdict(fighter1, fighter2),
+      ...imageRequests,
+    ]);
     if (fightId !== currentFight) return;
+    fighters.forEach((name, i) => {
+      artSlots[i].classList.remove('is-winner');
+      setArt(artSlots[i], name, images[i]);
+    });
     resultWinner.textContent = verdict.winner;
     resultMatchup.textContent = `${fighter1} vs ${fighter2}`;
     resultReasoning.textContent = verdict.reasoning;

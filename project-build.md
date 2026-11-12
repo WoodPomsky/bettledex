@@ -105,10 +105,10 @@ Everything is built and tested **locally**. No deploying to Vercel until the fin
 **Goal:** Art for both fighters.
 
 - After Fight, start the verdict call and both image calls at the same time.
-- Show the verdict as soon as it arrives. Images fill in when ready, each side with its own loading placeholder.
+- Stay on the loading screen until the verdict and both images are back, then show the whole result at once. If the verdict fails, show the error straight away.
 - Show a placeholder image when the art doesn't arrive. Moderation-blocked and generic failures get different messages (e.g. "The artist refused to draw this one" vs "The art didn't come through. Try again").
 
-**Done when:** A fight shows the verdict quickly, then both images appear. A moderation-blocked image and a failed image each show the placeholder with their own message, without breaking the page.
+**Done when:** A fight shows the verdict and both images together, once they are all ready. A moderation-blocked image and a failed image each show the placeholder with their own message, without breaking the page.
 
 ---
 
